@@ -36,23 +36,16 @@ const fetchData = async (url) => {
 const run_test = async () => {
   let categories = document.querySelectorAll("h2")
   categories = Array.from(categories).filter(category => category.id !== "current_best");
-  console.log(`typeof categorie in run_test: ${typeof categories}`)
   for (let categorie of categories) {
     if (categorie.id === 'best'){
       const fetchedData = await fetchData(`http://localhost:8000/api/v1/titles/?sort_by=-imdb_score&page_size=7`);
-      console.log(fetchedData)
       const jsonData = JSON.stringify(fetchedData);
-      console.log(jsonData)
       create_slider(jsonData, categorie);
       addEventListeners();
     }
     else{
-      console.log(`http://localhost:8000/api/v1/titles/?genres=${categorie.id}&page_size=7`);
     const fetchedData = await fetchData(`http://localhost:8000/api/v1/titles/?genre=${categorie.id}&page_size=7`);
-    console.log(`Ta grand mère la salope de merde: ${typeof fetchedData}`);
-    console.log(fetchedData);
     const jsonData = JSON.stringify(fetchedData);
-    console.log(jsonData);
     create_slider(jsonData, categorie);
     addEventListeners();
     };
@@ -79,7 +72,6 @@ const run_best = async () => {
 };
 
 const best_movie = async (movie) => {
-  console.log(movie)
   // console.log(`movie id: ${movie_id}`);
   const best_section = document.getElementById('current_best')
   const div = document.createElement('div');
@@ -88,6 +80,7 @@ const best_movie = async (movie) => {
   title.classList.add('best_title');
   const img = document.createElement('img');
   img.classList.add('best_img');
+  img.alt=`Affiche de ${movie.title}`
   const infos = document.createElement('p');
   infos.classList.add('best_infos')
   img.src = movie.image_url;
@@ -101,14 +94,14 @@ const best_movie = async (movie) => {
     `Durée: ${movie.duration}(min) \n` +
     `Résumé: ${movie.description} \n` +
     `Box-office mondial: ${movie.worldwide_gross_income} \n`)
-  best_section.append(div);
+  // best_section.append(div);
   div.append(img);
   div.append(title);
   div.append(infos);
+  insertAfter(best_section ,div)
 }
 
 const categories = document.querySelectorAll('h2') 
-console.log(`categories: ${categories}`)
 
 
 // Génération de contenu
@@ -121,11 +114,12 @@ function create_slide(movie){
   const title = document.createElement('p');
   title.classList.add('title')
   title.innerText = movie.title;
-  title.setAttribute("title_id", `${movie.id}`)
+  title.setAttribute("data-movie-id", `${movie.id}`)
   const imgDiv = document.createElement('div');
   imgDiv.classList.add('image_container')
   const img = document.createElement('img');
   img.classList.add('movie_image')
+  img.alt = `Affiche de ${movie.title}`
   img.src = movie.image_url
   imgDiv.appendChild(img)
   slide.appendChild(title)
@@ -168,14 +162,20 @@ function build_modal(movie){
 
 
   closeBtn.addEventListener('click', function() {
-    modalSection.remove();
+    const oldModal = document.querySelectorAll('section')
+    for (let modal of oldModal) {
+      modal.remove()
+    };
   });
   return modalSection;
 }
 
 async function create_modal(movie_id){
+  const oldModal = document.querySelectorAll('section')
+  if (oldModal.length){
+    oldModal[0].remove()
+  }
   let movie_url = (`http://localhost:8000/api/v1/titles/${movie_id}`);
-  console.log(`movie url ${movie_url}`)
   let movie = await fetchData(movie_url)
   let modal = build_modal(movie);
   document.body.appendChild(modal)
@@ -295,7 +295,7 @@ function addEventListeners(){
     slides.forEach(function(slide) {
       slide.addEventListener('click', async function(title){
       let Title = slide.querySelector('p')
-      movie_id = Title.getAttribute("title_id")
+      movie_id = Title.getAttribute("movie_id")
       await create_modal(movie_id)
       })
     })
